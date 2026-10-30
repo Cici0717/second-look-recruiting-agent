@@ -1,4 +1,6 @@
-$ErrorActionPreference = 'Stop'
+# Native stderr is expected for missing repository, remote and Pages.
+# Check native exit codes explicitly (Windows PowerShell 5.1 compatible).
+$ErrorActionPreference = 'Continue'
 Set-Location -LiteralPath $PSScriptRoot
 $account = gh api user --jq .login
 if ($LASTEXITCODE -ne 0 -or $account.Trim() -ne 'Cici0717') { throw 'Please authenticate as Cici0717 first.' }
@@ -11,6 +13,7 @@ if ($LASTEXITCODE -ne 0) {
 $origin = git remote get-url origin 2>$null
 if ($LASTEXITCODE -ne 0) {
   git remote add origin "https://github.com/$repo.git"
+  if ($LASTEXITCODE -ne 0) { throw 'Adding origin failed.' }
 } elseif ($origin.Trim() -ne "https://github.com/$repo.git") {
   throw 'Existing origin differs; stopping to preserve repository configuration.'
 }
@@ -28,3 +31,4 @@ if ($LASTEXITCODE -ne 0) { throw 'Deployment trigger failed.' }
 Write-Host "Repository: https://github.com/$repo"
 Write-Host 'Pages URL (available after Actions succeeds): https://cici0717.github.io/second-look-recruiting-agent/'
 gh run list --repo $repo --workflow pages.yml --limit 2
+
